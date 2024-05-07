@@ -29,11 +29,11 @@ C <- matrix(c(0, 0, 0, 1), nrow=1, ncol=4)
 
 # Initial states and covariance matrices
 X <- matrix(rep(0, 4), ncol=1)  # Initial state
-SigmaX <- diag(4)  # Initial state covariance, large values to represent uncertainty
+SigmaX <- diag(rep(sigma1, 4))  # Initial covariance matrix
 
 # Function to generate G(Xt) matrix
 get_G <- function(X) {
-  s <- sqrt(abs(X))
+  s <- abs(X)
   diag(as.vector(s))
 }
 
