@@ -4,14 +4,12 @@ b1 <- read.csv("data/rain1.csv")
 b2 <- read.csv("data/rain2.csv")
 b3 <- read.csv("data/rain3.csv")
 b4 <- read.csv("data/rain4.csv")
-
-length(b1$minutes)
-
+set.seed(69)
 
 # parameters
 a <- 0.04
 sigma1 <- 0.1
-sigma2 <- 0.5
+sigma2 <- 0.1
 K_states <- 4
 
 N <- length(b1$minutes) # dependent on what experiment we use
@@ -39,6 +37,8 @@ for (I in 2:N){
   Y[I] <- C %*% X[,I] + sqrt(Sigma2) %*% rnorm(1)
 }
 
+
+
 ### plotting
 y_max <- max(b1$y)
 old_mar <- par("mar")
@@ -57,11 +57,12 @@ lines(b1$minutes,X[1,], col="#946ca3", lwd=lw, lty=lt)
 lines(b1$minutes,X[2,], col="#da739e", lwd=lw, lty=lt)
 lines(b1$minutes,X[3,], col="#ffa760", lwd=lw, lty=lt)
 lines(b1$minutes,X[4,], col="#64aa3c", lwd=lw, lty=lt)
+lines(b1$minutes,Y, col="#573500", lwd=lw, lty=lt)
 legend("topright", 
-       legend = c("rainfall", "water level", "State 1", "State 2", "State 3", "State 4"), 
-       col = c("red","blue","#946ca3", "#da739e", "#ffa760", "#64aa3c"), 
-       lwd = c(1, 1, lw, lw, lw, lw),
-       lty = c(1, 1, lt, lt, lt, lt),
+       legend = c("rainfall", "water level", "State 1", "State 2", "State 3", "State 4", "Output"), 
+       col = c("red","blue","#946ca3", "#da739e", "#ffa760", "#64aa3c", "#573500"), 
+       lwd = c(1, 1, lw, lw, lw, lw, lw),
+       lty = c(1, 1, lt, lt, lt, lt, lt),
        cex=0.8)
 
 par(new=TRUE)
