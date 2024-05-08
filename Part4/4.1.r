@@ -2,67 +2,70 @@
 library(Matrix)  # For sparse and diagonal matrix operations
 
 # Load data from CSV files
-X1 <- read.csv('data/rain1.csv', header=FALSE)[-1,]
-X2 <- read.csv('data/rain2.csv', header=FALSE)[-1,]
-X3 <- read.csv('data/rain3.csv', header=FALSE)[-1,]
-X4 <- read.csv('data/rain4.csv', header=FALSE)[-1,]
+X1 <- read.csv('data/rain1.csv')
+X2 <- read.csv('data/rain2.csv')
+X3 <- read.csv('data/rain3.csv')
+X4 <- read.csv('data/rain4.csv')
 
 # Combine data from all events into a single data frame
-data <- rbind(X1, X2, X3, X4)
+data <- rbind(X1)
 
-# Extract rain inputs (ut) and water levels (yt)
-ut <- as.numeric(data[, 1])  # Assuming first column is ut
-yt <- as.numeric(data[, 2])  # Assuming second column is yt
+K_states <- 4
 
-# Parameters
-a <- 0.05  # Transition rate
-sigma1 <- 0.01  # Variance of system noise
-sigma2 <- 1  # Variance of observation noise
+N <- length(data$minutes) # dependent on what experiment we use
 
-# State-space matrices
-A <- matrix(c(1-a, 0, 0, 0,
-              a, 1-a, 0, 0,
-              0, a, 1-a, 0,
-              0, 0, a, 0.98), nrow=4, byrow=TRUE)
-B <- matrix(c(1, 0, 0, 0), nrow=4, ncol=1)
-C <- matrix(c(0, 0, 0, 1), nrow=1, ncol=4)
+B <- matrix(c(1,0,0,0),nrow=K_states) # column
+C <- matrix(c(0,0,0,1),nrow=1) # row 
 
-# Initial states and covariance matrices
-X <- matrix(rep(0, 4), ncol=1)  # Initial state
-SigmaX <- diag(rep(sigma1, 4))  # Initial covariance matrix
+# Initialize the SigmaX
+SigmaX <- diag(K_states)*1000
 
-# Function to generate G(Xt) matrix
-get_G <- function(X) {
-  s <- abs(X)
-  diag(as.vector(s))
-}
-
-# Kalman filtering process
-n <- length(ut)
-predicted_levels <- numeric(n)
-estimated_levels <- numeric(n)
-
-for (i in 2:n) {
-  # Predict step
-  e1_t <- rnorm(4, mean = 0, sd = sqrt(sigma1))
-  G_t_minus_1 <- get_G(X)
-  system_noise <- G_t_minus_1 %*% e1_t
-  X <- A %*% X + B %*% ut[i] + system_noise
-  SigmaX <- A %*% SigmaX %*% t(A) + G_t_minus_1 %*% diag(rep(sigma1, 4)) %*% t(G_t_minus_1)
-  predicted_levels[i] <- as.numeric(C %*% X)
+negloglik <- function(prm) {
+  a <- prm[1]
+  sigma1 <- prm[2]
+  sigma2 <- prm[3]
   
-  # Update step
-  e2_t <- rnorm(1, mean = 0, sd = sqrt(sigma2))
-  Y_t <- yt[i] + e2_t
-  innov <- Y_t - C %*% X
-  S <- C %*% SigmaX %*% t(C) + sigma2
-  K <- SigmaX %*% t(C) %*% solve(S)
-  X <- X + K %*% innov
-  SigmaX <- SigmaX - K %*% C %*% SigmaX
-  estimated_levels[i] <- as.numeric(C %*% X)
+  # System matrices based on parameters
+  A <- matrix(c(1-a, 0, 0, 0,
+                a, 1-a, 0, 0,
+                0, a, 1-a, 0,
+                0, 0, a, 0.98), nrow=K_states, byrow=TRUE)
+  Sigma1 <- diag(rep(sigma1, K_states))
+  Sigma2 <- matrix(sigma2, nrow=1, ncol=1)
+  
+  # Initialize state and likelihood
+  X <- matrix(0, nrow=K_states, ncol=N)
+  X[,1] <- X0
+  lik <- numeric(N)
+  
+  # Kalman filter loop
+  for (i in 2:N) {
+    # Prediction step
+    X_pred <- A %*% X[,i-1]
+    SigmaX_pred <- A %*% SigmaX %*% t(A) + Sigma1
+    
+    # Update step
+    innov <- data$y[i] - C %*% X_pred
+    S <- C %*% SigmaX_pred %*% t(C) + Sigma2
+    K <- SigmaX_pred %*% t(C) %*% solve(S)
+    X[,i] <- X_pred + K %*% innov
+    SigmaX <- SigmaX_pred - K %*% C %*% SigmaX_pred
+    
+    # Calculate likelihood
+    lik[i] <- dnorm(data$y[i], mean = C %*% X[,i], sd = sqrt(S))
+  }
+  
+  # Negative log-likelihood
+  -sum(log(lik[-1]))  # Skip the first likelihood as it's not initialized
 }
 
-# Results
-plot(predicted_levels, type = 'l', col = 'blue', ylim = range(c(predicted_levels, estimated_levels)), ylab = 'Water Level', main = 'Predicted vs Estimated Water Levels')
-lines(estimated_levels, col = 'red')
-legend("topright", legend=c("Predicted", "Estimated"), col=c("blue", "red"), lty=1)
+params <- list(a = 0.04, sigma1 = 0.1, sigma2 = 0.5)
+lower.bound <- c(0.01, 0.001, 0.1)
+upper.bound <- c(0.1, 1, 5)
+
+# Test it
+opt_res <- optim(par = c(params$a, params$sigma1, params$sigma2), 
+                fn = negloglik, method = "L-BFGS-B",
+                lower = lower.bound, upper = upper.bound)
+
+print(opt_res)
