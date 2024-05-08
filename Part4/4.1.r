@@ -35,6 +35,7 @@ negloglik <- function(prm) {
   
   # Initialize state and likelihood
   X <- matrix(0, nrow=K_states, ncol=N)
+  X0 <- matrix(0, nrow=K_states, ncol=1)
   X[,1] <- X0
   lik <- numeric(N)
   
