@@ -1,11 +1,12 @@
 setwd(dirname(dirname(rstudioapi::getActiveDocumentContext()$path)));getwd() # automatically sets WD to repo-base
 
 b1 <- read.csv("data/rain1.csv")
+set.seed(69)
 
 # parameters
 a <- 0.04
 sigma1 <- 0.1
-sigma2 <- 0.5
+sigma2 <- 0.1
 K_states <- 4
 
 N <- length(b1$minutes) # dependent on what experiment we use
@@ -16,7 +17,6 @@ X0 <- c(0,0,0,0) # column vector
 X[,1] <- X0
 B <- matrix(c(1,0,0,0),nrow=K_states) # column
 C <- matrix(c(0,0,0,1),nrow=1) # row 
-
 
 kalman_filter <- function(input, a, sigma1, sigma2){
   A <- matrix(c(1-a,0,0,0,
@@ -35,15 +35,56 @@ kalman_filter <- function(input, a, sigma1, sigma2){
   return(list(X = X, Y = Y))
 }
 
+as <- c(0.04, 0.02, 0.06)
+sigma1s <- c(0.1, 0.01, 0.5)
+sigma2s <- c(0.1, 0.01, 1)
+
+
 simul <- kalman_filter(b1$u, a, sigma1, sigma2)
-X <- simul$X
-Y <- simul$y
+# X <- simul$X
+# Y <- simul$Y
 
 
 ### TODO: MAKE MANY PLOTS WITH DIFFERENT PARAMETER VALUES in kalman_filter. see 1_1 with more compact plotting
+kalman_plot <- function(data, simul, title, position, y_max){
+  if (!(position %in% c("left", "right", "middle"))) {
+    stop("Invalid side argument. Choose 'left', 'right' or 'middle'.")
+  }
+  
+  
+  plot(data$minutes, data$y, col="blue", type="l", 
+       xlab="Time (minutes)", ylab="",
+       ylim=c(0, y_max))
+  
+  lw=3;lt=4
+  lines(data$minutes,simul$X[1,], col="#946ca3", lwd=lw, lty=lt)
+  lines(data$minutes,simul$X[2,], col="#da739e", lwd=lw, lty=lt)
+  lines(data$minutes,simul$X[3,], col="#ffa760", lwd=lw, lty=lt)
+  lines(data$minutes,simul$X[4,], col="#64aa3c", lwd=lw, lty=lt)
+  lines(data$minutes,simul$Y, col="#573500", lwd=lw, lty=lt)
 
-
-
+  par(new=TRUE)
+  plot(data$minutes, data$u, 
+       col="red", lwd=1, type="l",
+       xlab="Time (minutes)", ylab="", yaxt="n",
+       main=title, ylim=c(0, y_max/10))
+  
+  legend("topright", 
+         legend = c("rainfall", "water level", "State 1", "State 2", "State 3", "State 4", "Output"), 
+         col = c("red","blue","#946ca3", "#da739e", "#ffa760", "#64aa3c", "#573500"), 
+         lwd = c(1, 1, lw, lw, lw, lw, lw),
+         lty = c(1, 1, lt, lt, lt, lt, lt),
+         cex=0.8)
+  axis(side=4, col.axis="red", las=1)
+  
+  if (position == "left"){
+    mtext(expression(paste("(100 ", m^3, ")")), side=2, line=2.5, col="black")
+  } else if (position == "right") {
+    mtext(expression(paste("Rainfall 'u' (100 ", m^3, "/min)")), side=4, line=2.5, col="red")
+  } else if (position == "middle") {
+    
+  }
+}
 
 
 
@@ -53,31 +94,5 @@ old_mar <- par("mar")
 par(mfrow=c(1,1), oma=c(0,0,0,3), mar=c(4.1, 4, 2, 1))
 
 # right side will be the water level for, left will be input water rain
-
-plot(b1$minutes, b1$y, col="blue", type="l", 
-     xlab="Time (minutes)", ylab=expression(paste("(100 ", m^3, ")")),
-     ylim=c(0, y_max))
-# axis(side=4, col.axis="blue", las=1)
-# mtext(expression(paste("y (100 ", m^3, ")")), side=4, line=2.5, col="blue")
-
-lw=3;lt=4
-lines(b1$minutes,X[1,], col="#946ca3", lwd=lw, lty=lt)
-lines(b1$minutes,X[2,], col="#da739e", lwd=lw, lty=lt)
-lines(b1$minutes,X[3,], col="#ffa760", lwd=lw, lty=lt)
-lines(b1$minutes,X[4,], col="#64aa3c", lwd=lw, lty=lt)
-legend("topright", 
-       legend = c("rainfall", "water level", "State 1", "State 2", "State 3", "State 4"), 
-       col = c("red","blue","#946ca3", "#da739e", "#ffa760", "#64aa3c"), 
-       lwd = c(1, 1, lw, lw, lw, lw),
-       lty = c(1, 1, lt, lt, lt, lt),
-       cex=0.8)
-
-par(new=TRUE)
-plot(b1$minutes, b1$u, 
-     col="red", lwd=1, type="l",
-     xlab="Time (minutes)", ylab="", yaxt="n",
-     main="", ylim=c(0, y_max/10))
-axis(side=4, col.axis="red", las=1)
-mtext(expression(paste("Rainfall 'u' (100 ", m^3, "/min)")), side=4, line=2.5, col="red")
-
+kalman_plot(b1, simul, "params:", "left", y_max = y_max)
 
