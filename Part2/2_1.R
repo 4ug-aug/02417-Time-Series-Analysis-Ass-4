@@ -31,7 +31,7 @@ Sigma2 <- matrix(sigma2)
 Y <- numeric(N)
 Y[1] <- C%*%X[,1] + sqrt(Sigma2) %*% rnorm(1) # scalar (the level of water in basin)
 
-# running N steps Kalman filtering with input u_t (rainfall)
+# running N steps with input u_t (rainfall)
 for (I in 2:N){
   X[,I] <- A %*% X[,I-1,drop=FALSE] + B%*%b1$u[I-1] + chol(Sigma1) %*% matrix(rnorm(K_states),ncol=1) #rnorm is sqrt(|X_t-1|) = G(X_t-1)
   Y[I] <- C %*% X[,I] + sqrt(Sigma2) %*% rnorm(1)
@@ -42,15 +42,15 @@ for (I in 2:N){
 ### plotting
 y_max <- max(b1$y)
 old_mar <- par("mar")
-par(mfrow=c(1,1), oma=c(0,0,0,3), mar=c(4.1, 4, 2, 1))
+par(mfrow=c(1,1), oma=c(0,3,0,3), mar=c(2.1, 1, 2, 1))
 
 # right side will be the water level for, left will be input water rain
 
 plot(b1$minutes, b1$y, col="blue", type="l", 
      xlab="Time (minutes)", ylab=expression(paste("(100 ", m^3, ")")),
      ylim=c(0, y_max))
-# axis(side=4, col.axis="blue", las=1)
-# mtext(expression(paste("y (100 ", m^3, ")")), side=4, line=2.5, col="blue")
+#axis(side=2, col.axis="blue", las=1)
+mtext(expression(paste("y (100 ", m^3, ")")), side=2, line=2.5, col="blue")
 
 lw=3;lt=4
 lines(b1$minutes,X[1,], col="#946ca3", lwd=lw, lty=lt)
