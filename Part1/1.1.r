@@ -21,12 +21,15 @@ double_axis_plot <- function(data, title, side, x_max, y_max){
   
   plot(data$minutes, data$u, type="l", col="red",
        xlab="Time (minutes)", ylab="", yaxt="n",
-       main=title, ylim=c(y_min, y_max/10))
+       main=title, 
+       ylim=c(0, y_max/10),
+       xlim=c(0, x_max))
   axis(side=2, col.axis="red", las=1)
   par(new=TRUE)
   plot(data$minutes, data$y, type="l", col="blue", axes=FALSE, xlab="", ylab="", 
-       ylim=c(0, max(b1$y, na.rm = TRUE)))
-  axis(side=4, at=pretty(range(b1$y)), col.axis="blue", las=1)
+       ylim=c(0, y_max),
+       xlim=c(0, x_max))
+  axis(side=4, col.axis="blue", las=1)
   legend("topright", legend=c("Rain (u)", "Water level (y)"), col=c("red", "blue"), lty=1, cex=0.8)
   
   if (side == "left"){
@@ -38,10 +41,10 @@ double_axis_plot <- function(data, title, side, x_max, y_max){
 
 # We plot u (measured incoming rain) and y (measured water level) for each basin
 old_mar <- par("mar")
-par(mfrow=c(2,2), oma=c(0,0,0,3), mar=c(4.1, 4, 2, 1))
+par(mfrow=c(2,2), oma=c(0,2.5,0,2), mar=c(2.1, 2, 2, 2))
 # We plot two lines in each plot, rainfall scaled by 10 visually
-double_axis_plot(b1, "Basin 1", "left", x_max, y_max)
-double_axis_plot(b2, "Basin 2", "right", x_max, y_max)
-double_axis_plot(b3, "Basin 3", "left", x_max, y_max)
-double_axis_plot(b4, "Basin 4", "right", x_max, y_max)
+double_axis_plot(b1, "Event 1", "left", x_max, y_max)
+double_axis_plot(b2, "Event 2", "right", x_max, y_max)
+double_axis_plot(b3, "Event 3", "left", x_max, y_max)
+double_axis_plot(b4, "Event 4", "right", x_max, y_max)
 

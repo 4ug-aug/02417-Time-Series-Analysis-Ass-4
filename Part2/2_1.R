@@ -33,7 +33,7 @@ Y[1] <- C%*%X[,1] + sqrt(Sigma2) %*% rnorm(1) # scalar (the level of water in ba
 
 # running N steps Kalman filtering with input u_t (rainfall)
 for (I in 2:N){
-  X[,I] <- A %*% X[,I-1,drop=FALSE] + B%*%b1$u[I-1] + chol(Sigma1) %*% matrix(rnorm(K_states),ncol=1)
+  X[,I] <- A %*% X[,I-1,drop=FALSE] + B%*%b1$u[I-1] + chol(Sigma1) %*% matrix(rnorm(K_states),ncol=1) #rnorm is sqrt(|X_t-1|) = G(X_t-1)
   Y[I] <- C %*% X[,I] + sqrt(Sigma2) %*% rnorm(1)
 }
 
