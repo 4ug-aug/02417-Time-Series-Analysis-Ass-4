@@ -11,6 +11,11 @@ a <- 0.037
 sigma1 <- 0.025
 sigma2 <- 1.5
 K_states <- 4
+# params by MLE
+a <- 0.04
+sigma1 <- 0.11
+sigma2 <- 0.5
+K_states <- 4
 
 
 kalman_filter <- function(input, a, sigma1, sigma2){
@@ -60,7 +65,7 @@ kalman_plot <- function(data, simul, title, params, position, bottom, x_max, y_m
     axis(side=2, col.axis="black", las=1)
   }
   
-  #title <- bquote( ~ "a:" ~ .(params[1]) ~ sigma[1]: .(params[2]) ~ sigma[2]: .(params[3]))
+  # title <- bquote( ~ "a:" ~ .(params[1]) ~ sigma[1]: .(params[2]) ~ sigma[2]: .(params[3]))
   
   par(new=TRUE)
   plot(data$minutes, data$u, 

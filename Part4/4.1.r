@@ -1,6 +1,5 @@
-# Load necessary libraries
-library(Matrix)  # For sparse and diagonal matrix operations
-set.seed(42)
+setwd(dirname(dirname(rstudioapi::getActiveDocumentContext()$path)));getwd() # automatically sets WD to repo-base
+set.seed(69)
 
 # Load data from CSV files
 X1 <- read.csv('data/rain1.csv')
@@ -63,7 +62,7 @@ for (data in list(X1, X2, X3, X4)) {
     # Negative log-likelihood
     -sum((lik[!is.na(lik)]))
   }
-
+  
   params <- list(a = 0.037, sigma1 = 0.025, sigma2 = 1.5)
   lower.bound <- c(0.01, 0.001, 0.1)
   upper.bound <- c(0.1, 1, 5)
@@ -73,11 +72,45 @@ for (data in list(X1, X2, X3, X4)) {
                   fn = negloglik, method = "L-BFGS-B",
                   lower = lower.bound, upper = upper.bound)
 
-  df <- rbind(df, data.frame(a = opt_res$par[1], sigma1 = opt_res$par[2], sigma2 = opt_res$par[3], likelihood = opt_res$value))
+  df <- rbind(df, data.frame(a = opt_res$par[1], sigma1 = opt_res$par[2], sigma2 = opt_res$par[3], nll = opt_res$value))
 }
 
 df
-# Variance of each parameter
-apply(df, 2, var)
-var(df$likelihood)
 
+kalman_plot <- function(data, simul, title, params, position, bottom, x_max, y_max){
+  if (!(position %in% c("left", "right", "middle"))) {
+    stop("Invalid side argument. Choose 'left', 'right' or 'middle'.")
+  }
+  
+  plot(data$minutes, data$y, col="blue", type="l", 
+       xlab="", ylab="", yaxt="n", xaxt="n",
+       ylim=c(0, y_max),
+       xlim=c(0, x_max))
+  
+  lw=3;lt=4
+  lines(data$minutes,simul$X[1,], col="#946ca3", lwd=lw, lty=lt)
+  lines(data$minutes,simul$X[2,], col="#da739e", lwd=lw, lty=lt)
+  lines(data$minutes,simul$X[3,], col="#ffa760", lwd=lw, lty=lt)
+  lines(data$minutes,simul$X[4,], col="#64aa3c", lwd=lw, lty=lt)
+  lines(data$minutes,simul$Y, col="#573500", lwd=lw, lty=lt)
+  
+  if (position == "left"){
+    axis(side=2, col.axis="black", las=1)
+  }
+  
+  title <- bquote( ~ "a:" ~ .(params[1]) ~ sigma[1]: .(params[2]) ~ sigma[2]: .(params[3]))
+  
+  par(new=TRUE)
+  plot(data$minutes, data$u, 
+       col="red", lwd=1, type="l", 
+       xlab="", ylab="", yaxt="n", xaxt="n", 
+       main=title, 
+       ylim=c(0, y_max/10))
+  if (position == "right") {
+    axis(side=4, col.axis="red", las=1)
+  } else if (position == "middle") {
+  }
+  if (bottom == TRUE){
+    axis(side=1, col.axis="black", las=1)
+  }
+}
