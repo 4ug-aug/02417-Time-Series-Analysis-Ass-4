@@ -63,7 +63,7 @@ for (data in list(X1, X2, X3, X4)) {
     -sum((lik[!is.na(lik)]))
   }
   
-  params <- list(a = 0.04, sigma1 = 0.025, sigma2 = 0.5)
+  params <- list(a = 0.037, sigma1 = 0.025, sigma2 = 1.5)
   lower.bound <- c(0.01, 0.001, 0.1)
   upper.bound <- c(0.1, 1, 5)
 
