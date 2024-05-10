@@ -9,6 +9,7 @@ X4 <- read.csv('data/rain4.csv')
 
 # df for likelihood parameters
 df <- data.frame(a = numeric(), sigma1 = numeric(), sigma2 = numeric(), likelihood = numeric())
+Y_predictions <- data.frame(Y = numeric())
 
 for (data in list(X1, X2, X3, X4)) {
   K_states <- 4
@@ -57,6 +58,10 @@ for (data in list(X1, X2, X3, X4)) {
       K <- SigmaX %*% t(C) %*% solve(SigmaY)
       X[,i] <- X_pred + K %*% innov
       SigmaX <- SigmaX - K %*% C %*% SigmaX
+
+
+      print(paste("innov:", innov))
+
     }
   
     # Negative log-likelihood
@@ -76,6 +81,8 @@ for (data in list(X1, X2, X3, X4)) {
 }
 
 df
+
+Y_predictions
 
 kalman_plot <- function(data, simul, title, params, position, bottom, x_max, y_max){
   if (!(position %in% c("left", "right", "middle"))) {
