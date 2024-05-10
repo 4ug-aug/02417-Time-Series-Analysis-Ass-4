@@ -39,25 +39,28 @@ negloglik <- function(prm) {
   X[,1] <- X0
   lik <- numeric(N)
   
+  i <- 1
   # Kalman filter loop
-  for (i in 2:N) {
+  while (i < N) {
     # Prediction step
-    X_pred <- A %*% X[,i-1]
-    SigmaX_pred <- A %*% SigmaX %*% t(A) + Sigma1
+    X_pred <- A %*% X[,i] + B %*% data$u[i] + chol(Sigma1) %*% rnorm(K_states, 0, 1)
+    SigmaX <- A %*% SigmaX %*% t(A) + Sigma1
+    SigmaY <- C %*% SigmaX %*% t(C) + Sigma2
     
+    i <- i + 1
+    # Likelihood
+    lik[i] <- dnorm(data$y[i], mean = C %*% X_pred, sd = sqrt(SigmaY), log = TRUE)
+
     # Update step
     innov <- data$y[i] - C %*% X_pred
-    S <- C %*% SigmaX_pred %*% t(C) + Sigma2
-    K <- SigmaX_pred %*% t(C) %*% solve(S)
+    SigmaY <- C %*% SigmaX %*% t(C) + Sigma2
+    K <- SigmaX %*% t(C) %*% solve(SigmaY)
     X[,i] <- X_pred + K %*% innov
-    SigmaX <- SigmaX_pred - K %*% C %*% SigmaX_pred
-    
-    # Calculate likelihood
-    lik[i] <- dnorm(data$y[i], mean = C %*% X[,i], sd = sqrt(S))
+    SigmaX <- SigmaX - K %*% C %*% SigmaX
   }
   
   # Negative log-likelihood
-  -sum(log(lik[-1]))  # Skip the first likelihood as it's not initialized
+  -sum((lik[!is.na(lik)]))
 }
 
 params <- list(a = 0.04, sigma1 = 0.1, sigma2 = 0.5)
