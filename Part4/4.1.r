@@ -1,6 +1,6 @@
 # Load necessary libraries
 library(Matrix)  # For sparse and diagonal matrix operations
-set.seed(69420)
+set.seed(42)
 
 # Load data from CSV files
 X1 <- read.csv('data/rain1.csv')
@@ -9,7 +9,7 @@ X3 <- read.csv('data/rain3.csv')
 X4 <- read.csv('data/rain4.csv')
 
 # df for likelihood parameters
-df <- data.frame(a = numeric(), sigma1 = numeric(), sigma2 = numeric())
+df <- data.frame(a = numeric(), sigma1 = numeric(), sigma2 = numeric(), likelihood = numeric())
 
 for (data in list(X1, X2, X3, X4)) {
   K_states <- 4
@@ -59,12 +59,12 @@ for (data in list(X1, X2, X3, X4)) {
       X[,i] <- X_pred + K %*% innov
       SigmaX <- SigmaX - K %*% C %*% SigmaX
     }
-    
+  
     # Negative log-likelihood
     -sum((lik[!is.na(lik)]))
   }
 
-  params <- list(a = 0.04, sigma1 = 0.1, sigma2 = 0.5)
+  params <- list(a = 0.037, sigma1 = 0.025, sigma2 = 1.5)
   lower.bound <- c(0.01, 0.001, 0.1)
   upper.bound <- c(0.1, 1, 5)
 
@@ -73,8 +73,11 @@ for (data in list(X1, X2, X3, X4)) {
                   fn = negloglik, method = "L-BFGS-B",
                   lower = lower.bound, upper = upper.bound)
 
-  df <- rbind(df, data.frame(a = opt_res$par[1], sigma1 = opt_res$par[2], sigma2 = opt_res$par[3]))
+  df <- rbind(df, data.frame(a = opt_res$par[1], sigma1 = opt_res$par[2], sigma2 = opt_res$par[3], likelihood = opt_res$value))
 }
 
 df
+# Variance of each parameter
+apply(df, 2, var)
+var(df$likelihood)
 
